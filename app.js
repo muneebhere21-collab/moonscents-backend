@@ -63099,7 +63099,7 @@ var NEVER = INVALID;
 // server/config/env.ts
 var envSchema = external_exports.object({
   NODE_ENV: external_exports.enum(["development", "test", "production"]).default("development"),
-  PORT: external_exports.coerce.number().default(4e3),
+  PORT: external_exports.union([external_exports.coerce.number(), external_exports.string()]).default(4e3),
   CORS_ORIGIN: external_exports.string().default("http://localhost:8080"),
   SAFEPAY_SECRET_KEY: external_exports.string().optional(),
   SAFEPAY_ENV: external_exports.enum(["sandbox", "production"]).default("sandbox"),
