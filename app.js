@@ -72424,9 +72424,15 @@ __name(createApp, "createApp");
 async function bootstrap() {
   const env2 = getEnv();
   const app = createApp();
-  app.listen(env2.PORT, "0.0.0.0", () => {
-    console.log(`Moonscents API running on http://0.0.0.0:${env2.PORT}`);
-  });
+  if (typeof env2.PORT === "string") {
+    app.listen(env2.PORT, () => {
+      console.log(`Moonscents API running on socket: ${env2.PORT}`);
+    });
+  } else {
+    app.listen(env2.PORT, "0.0.0.0", () => {
+      console.log(`Moonscents API running on http://0.0.0.0:${env2.PORT}`);
+    });
+  }
 }
 __name(bootstrap, "bootstrap");
 bootstrap().catch((error) => {
