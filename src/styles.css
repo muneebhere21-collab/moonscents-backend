@@ -1,0 +1,158 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-silver: var(--silver);
+  --color-silver-muted: var(--silver-muted);
+  --color-moonlight: var(--moonlight);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+
+@layer base {
+  :root {
+    --radius: 0.25rem;
+
+    /* Celestial dark palette */
+    --background: oklch(0.12 0.02 260);          /* near-black midnight */
+    --foreground: oklch(0.94 0.01 250);
+
+    --card: oklch(0.16 0.025 260);
+    --card-foreground: oklch(0.94 0.01 250);
+
+    --popover: oklch(0.14 0.02 260);
+    --popover-foreground: oklch(0.94 0.01 250);
+
+    --primary: oklch(0.86 0.015 250);             /* silver */
+    --primary-foreground: oklch(0.12 0.02 260);
+
+    --secondary: oklch(0.22 0.03 260);
+    --secondary-foreground: oklch(0.94 0.01 250);
+
+    --muted: oklch(0.20 0.025 260);
+    --muted-foreground: oklch(0.65 0.02 255);
+
+    --accent: oklch(0.78 0.04 250);
+    --accent-foreground: oklch(0.12 0.02 260);
+
+    --destructive: oklch(0.55 0.22 27);
+    --destructive-foreground: oklch(0.98 0 0);
+
+    --border: oklch(0.28 0.02 260 / 0.6);
+    --input: oklch(0.25 0.02 260);
+    --ring: oklch(0.78 0.04 250);
+
+    --silver: oklch(0.86 0.015 250);
+    --silver-muted: oklch(0.62 0.02 255);
+    --moonlight: oklch(0.96 0.005 250);
+
+    --font-display: "Cormorant Garamond", "Times New Roman", serif;
+    --font-body: "Inter", system-ui, sans-serif;
+
+    --gradient-lunar: radial-gradient(
+      ellipse at top,
+      oklch(0.32 0.05 255 / 0.55),
+      transparent 60%
+    );
+    --gradient-night: linear-gradient(
+      180deg,
+      oklch(0.10 0.02 260) 0%,
+      oklch(0.14 0.025 260) 100%
+    );
+    --gradient-silver-text: linear-gradient(
+      180deg,
+      oklch(0.98 0.005 250) 0%,
+      oklch(0.72 0.02 255) 100%
+    );
+    --shadow-moon: 0 0 80px oklch(0.86 0.015 250 / 0.15);
+    --shadow-elevate: 0 30px 80px -20px oklch(0 0 0 / 0.6);
+    --transition-silk: 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-background);
+    background-image: var(--gradient-night);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer utilities {
+  .font-display { font-family: var(--font-display); }
+  .text-silver-gradient {
+    background: var(--gradient-silver-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .bg-lunar { background-image: var(--gradient-lunar); }
+  .shadow-moon { box-shadow: var(--shadow-moon); }
+  .shadow-elevate { box-shadow: var(--shadow-elevate); }
+  .transition-silk { transition: all var(--transition-silk); }
+  .tracking-luxe { letter-spacing: 0.32em; }
+}
+
+@keyframes moon-drift {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.55; }
+  50% { transform: translateY(-12px) scale(1.02); opacity: 0.75; }
+}
+.animate-moon-drift { animation: moon-drift 9s ease-in-out infinite; }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.86 0.015 250 / 0.15),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3.5s linear infinite;
+}
