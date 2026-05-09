@@ -1,0 +1,14 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/moonscen/nodeapps
+    - /bin/mkdir -p $DEPLOYPATH/frontend
+    - /bin/mkdir -p $DEPLOYPATH/backend
+    - /bin/cp -R * $DEPLOYPATH/frontend/
+    - /bin/cp -R * $DEPLOYPATH/backend/
+    - /bin/cp -R .env $DEPLOYPATH/frontend/ 2>/dev/null || true
+    - /bin/cp -R .env $DEPLOYPATH/backend/ 2>/dev/null || true
+    - /bin/mkdir -p $DEPLOYPATH/frontend/tmp
+    - /bin/mkdir -p $DEPLOYPATH/backend/tmp
+    - /bin/touch $DEPLOYPATH/frontend/tmp/restart.txt
+    - /bin/touch $DEPLOYPATH/backend/tmp/restart.txt
