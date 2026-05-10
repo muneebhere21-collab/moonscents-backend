@@ -32,4 +32,9 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+# Deployment
+*.zip
+dist/
+dist-server/
+dist-bundle/
+server-deploy-temp/
