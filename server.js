@@ -1,5 +1,8 @@
-import { createApp } from './dist-server/app.js';
-import { getEnv } from './dist-server/config/env.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
+const { createApp } = require('./dist-server/app.js');
+const { getEnv } = require('./dist-server/config/env.js');
 
 const app = createApp();
 
