@@ -34,6 +34,7 @@ dist-ssr
 *.sln
 # Deployment
 *.zip
+import.env
 dist/
 dist-server/
 dist-bundle/
