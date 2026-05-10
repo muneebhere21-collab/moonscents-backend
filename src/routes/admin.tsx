@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/site/Layout";
 import { useAuth } from "@/lib/auth";
-import { apiRequest } from "@/lib/api";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
@@ -105,12 +104,12 @@ function AdminPage() {
   }, [isAdmin]);
 
   async function refresh() {
-    const [o, p] = await Promise.all([
-      apiRequest<Order[]>("/api/orders"),
-      apiRequest<Product[]>("/api/products"),
+    const [{ data: o }, { data: p }] = await Promise.all([
+      supabase.from("orders").select("*").order("created_at", { ascending: false }),
+      supabase.from("products").select("*").order("created_at", { ascending: false }),
     ]);
-    setOrders(o ?? []);
-    setProducts(p ?? []);
+    setOrders((o ?? []) as Order[]);
+    setProducts((p ?? []) as Product[]);
   }
 
   function setFormField<K extends keyof ProductForm>(key: K, value: ProductForm[K]) {
@@ -178,16 +177,12 @@ function AdminPage() {
 
     try {
       if (editingId) {
-        await apiRequest(`/api/products/${editingId}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        });
+        const { error } = await supabase.from("products").update(payload).eq("id", editingId);
+        if (error) throw error;
         toast.success("Product updated");
       } else {
-        await apiRequest("/api/products", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        const { error } = await supabase.from("products").insert(payload);
+        if (error) throw error;
         toast.success("Product created");
       }
 
@@ -203,10 +198,8 @@ function AdminPage() {
   async function updateOrderStatus(id: string, status: string) {
     try {
       if (!id) throw new Error("Order ID is missing");
-      await apiRequest(`/api/orders/${id}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-      });
+      const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+      if (error) throw error;
       toast.success("Status updated");
       void refresh();
     } catch (err: any) {
@@ -218,7 +211,8 @@ function AdminPage() {
   async function deleteProduct(id: string) {
     if (!window.confirm("Are you sure?")) return;
     try {
-      await apiRequest(`/api/products/${id}`, { method: "DELETE" });
+      const { error } = await supabase.from("products").delete().eq("id", id);
+      if (error) throw error;
       toast.success("Product deleted");
       void refresh();
     } catch (err) {

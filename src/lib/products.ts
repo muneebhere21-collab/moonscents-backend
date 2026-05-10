@@ -9,9 +9,10 @@ export type Product = {
   tagline: string;
   price: number;
   image: string;
-  family: "Oriental" | "Floral" | "Woody" | "Aquatic";
-  notes: { top: string[]; heart: string[]; base: string[] };
-  story: string;
+  family: string;
+  notes?: { top: string[] | string; heart: string[] | string; base: string[] | string };
+  story?: string;
+  id?: string;
 };
 
 export const products: Product[] = [

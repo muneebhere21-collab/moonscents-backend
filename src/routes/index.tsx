@@ -3,12 +3,12 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/site/Layout";
 import { ProductCard } from "@/components/site/ProductCard";
-import { apiRequest } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import heroImg from "@/assets/hero-moon.jpg";
 
 type Product = {
-  _id: string;
+  id: string;
   slug: string;
   name: string;
   family: string;
@@ -28,6 +28,7 @@ export const Route = createFileRoute("/")({
   }),
 });
 
+
 function Index() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,21 +37,19 @@ function Index() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
-    
     if (!email) return;
-
     try {
-      const res = await fetch("/api/subscribers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.message || "Failed to subscribe");
-      
-      toast.success("Welcome to the Moonscents society.");
-      (e.target as HTMLFormElement).reset();
+      const { error } = await supabase.from("subscribers").insert({ email });
+      if (error) {
+        if (error.code === "23505") {
+          toast.success("You're already subscribed. Thank you!");
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success("Welcome to the Moonscents society.");
+        (e.target as HTMLFormElement).reset();
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to subscribe");
     }
@@ -59,9 +58,15 @@ function Index() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const results = await apiRequest<Product[]>("/api/products");
-        const standardProducts = (results || []).filter(p => p.slug !== "discovery-kit");
-        setProducts(standardProducts.slice(0, 4)); // Show first 4 on home
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, slug, name, family, tagline, price, image")
+          .eq("active", true)
+          .neq("slug", "discovery-kit")
+          .order("created_at", { ascending: false })
+          .limit(4);
+        if (error) throw error;
+        setProducts(data ?? []);
       } catch (err) {
         console.error("Failed to fetch products", err);
       } finally {
@@ -73,7 +78,6 @@ function Index() {
 
   return (
     <Layout>
-      {/* HERO ... */}
       {/* HERO */}
       <section className="relative h-[100svh] w-full overflow-hidden">
         <motion.img
@@ -104,7 +108,7 @@ function Index() {
             transition={{ duration: 1.2, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
             className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] max-w-3xl text-silver-gradient"
           >
-            Worn by the night.<br />Composed by the moon.
+            Worn by the night.<br /> Composed by the moon.
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}

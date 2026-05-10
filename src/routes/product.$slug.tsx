@@ -3,23 +3,23 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/site/Layout";
 import { useCart } from "@/lib/cart";
-import { apiRequest } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 type Product = {
-  _id: string;
+  id: string;
   slug: string;
   name: string;
   family: string;
   tagline: string;
   description: string;
-  composition: {
+  notes: {
     top: string;
     heart: string;
     base: string;
   };
   ml: number;
-  perfumeType: string;
+  perfume_type: string;
   image: string;
   price: number;
   variants?: {
@@ -32,13 +32,14 @@ type Product = {
 export const Route = createFileRoute("/product/$slug")({
   component: ProductPage,
   loader: async ({ params }) => {
-    try {
-      const product = await apiRequest<Product>(`/api/products/${params.slug}`);
-      if (!product) throw notFound();
-      return { product };
-    } catch (e) {
-      throw notFound();
-    }
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("slug", params.slug)
+      .eq("active", true)
+      .single();
+    if (error || !data) throw notFound();
+    return { product: data as Product };
   },
   head: ({ loaderData }) => ({
     meta: loaderData
@@ -80,19 +81,22 @@ function ProductPage() {
 
   useEffect(() => {
     async function fetchRecommendations() {
-      const results = await apiRequest<Product[]>("/api/products");
-      if (results) {
-        setRecommendations(results.filter(p => p.slug !== product.slug).slice(0, 3));
-      }
+      const { data } = await supabase
+        .from("products")
+        .select("id, slug, name, family, tagline, price, image, ml, perfume_type, description, notes, variants")
+        .eq("active", true)
+        .neq("slug", product.slug)
+        .limit(3);
+      if (data) setRecommendations(data as Product[]);
     }
     void fetchRecommendations();
   }, [product.slug]);
 
   const handleAdd = () => {
-    add({ 
-      slug: product.slug, 
-      name: product.name, 
-      price: selectedPrice, 
+    add({
+      slug: product.slug,
+      name: product.name,
+      price: selectedPrice,
       image: product.image,
       ml: selectedMl,
     });
@@ -119,7 +123,7 @@ function ProductPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2 }}
           >
-            <p className="text-xs tracking-luxe uppercase text-silver-muted mb-6">{product.family} · {product.perfumeType}</p>
+            <p className="text-xs tracking-luxe uppercase text-silver-muted mb-6">{product.family} · {product.perfume_type}</p>
             <h1 className="font-display text-5xl md:text-6xl text-silver-gradient mb-4">{product.name}</h1>
             <p className="font-display text-xl italic text-silver-muted">{product.tagline}</p>
 
@@ -174,7 +178,7 @@ function ProductPage() {
 
             <div className="mt-12 flex items-end justify-between gap-6">
               <div>
-                <p className="text-[10px] tracking-luxe uppercase text-silver-muted">{selectedMl}ml · {product.perfumeType}</p>
+                <p className="text-[10px] tracking-luxe uppercase text-silver-muted">{selectedMl}ml · {product.perfume_type}</p>
                 <p className="font-display text-3xl text-silver mt-2">PKR {selectedPrice.toLocaleString()}</p>
               </div>
               <button onClick={handleAdd} className="flex-1 max-w-xs bg-silver text-primary-foreground px-8 py-4 text-xs tracking-luxe uppercase hover:bg-moonlight transition-silk shadow-moon">

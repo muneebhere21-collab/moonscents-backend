@@ -4,7 +4,7 @@ import { z } from "zod";
 import { Layout } from "@/components/site/Layout";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
-import { apiRequest } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/checkout")({
@@ -64,8 +64,8 @@ function CheckoutPage() {
       return;
     }
     setErrors({});
-
     setLoading(true);
+
     try {
       if (!user) {
         toast.error("Please sign in to continue checkout");
@@ -73,30 +73,46 @@ function CheckoutPage() {
         return;
       }
 
-      const products = await apiRequest<Array<{ _id: string; slug: string }>>("/api/products");
-      const productIdBySlug = new Map(products.map((p) => [p.slug, p._id]));
-      const orderItems = items.map((item) => {
-        const productId = productIdBySlug.get(item.slug);
-        if (!productId) {
-          throw new Error(`Product unavailable: ${item.name}`);
-        }
-        return { productId, quantity: item.quantity };
+      // Fetch products to get IDs by slug
+      const { data: products, error: productsError } = await supabase
+        .from("products")
+        .select("id, slug, name, price")
+        .in("slug", items.map(i => i.slug));
+
+      if (productsError) throw productsError;
+
+      const productBySlug = new Map((products ?? []).map(p => [p.slug, p]));
+      const orderItems = items.map(item => {
+        const product = productBySlug.get(item.slug);
+        if (!product) throw new Error(`Product unavailable: ${item.name}`);
+        return { product_id: product.id, slug: item.slug, name: item.name, quantity: item.quantity, price: item.price };
       });
 
-      const order = await apiRequest<{ _id: string; payment?: { provider: string; status: string } }>("/api/orders", {
-        method: "POST",
-        body: JSON.stringify({
-          ...parsed.data,
-          paymentMethod,
+      const total = subtotal + (subtotal >= 10000 ? 0 : 350);
+
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          user_id: user.id,
+          customer_name: parsed.data.customer_name,
+          customer_email: parsed.data.customer_email,
+          customer_phone: parsed.data.customer_phone,
+          address: parsed.data.address,
+          city: parsed.data.city,
           items: orderItems,
-        }),
-      });
+          total_amount: total,
+          payment_method: paymentMethod.toUpperCase(),
+          status: "pending",
+        })
+        .select("id")
+        .single();
+
+      if (orderError) throw orderError;
 
       clear();
 
-      // Build WhatsApp message with order details
+      // Build WhatsApp message
       const WHATSAPP_NUMBER = "923303965260";
-      const total = subtotal + (subtotal >= 10000 ? 0 : 350);
       const paymentDisplay = {
         cod: "Cash on Delivery",
         jazzcash: "JazzCash",
@@ -104,7 +120,7 @@ function CheckoutPage() {
         bank: "Bank Transfer"
       }[paymentMethod] || paymentMethod.toUpperCase();
 
-      const shortOrderId = order._id.slice(-6).toUpperCase();
+      const shortOrderId = order.id.slice(-6).toUpperCase();
 
       const msg = [
         `✨ *MOONSCENTS — ORDER PLACED* ✨`,
@@ -134,10 +150,10 @@ function CheckoutPage() {
       toast.success("Order placed! Redirecting to WhatsApp...");
       setTimeout(() => {
         window.open(whatsappUrl, "_blank");
-        navigate({ to: "/order-confirmation", search: { id: order._id, payment: paymentMethod } });
+        navigate({ to: "/order-confirmation", search: { id: order.id, payment: paymentMethod } });
       }, 1000);
     } catch (err) {
-      console.error("!! Checkout: Payment/Order Failure:", err);
+      console.error("!! Checkout failure:", err);
       const msg = err instanceof Error ? err.message : "Could not place order";
       toast.error(msg);
     } finally {
@@ -228,11 +244,7 @@ function CheckoutPage() {
               disabled={loading}
               className="w-full bg-silver text-primary-foreground px-8 py-4 text-xs tracking-luxe uppercase hover:bg-moonlight transition-silk shadow-moon disabled:opacity-50 mt-8"
             >
-              {loading
-                ? "Placing order..."
-                : paymentMethod === "card"
-                ? `Pay by Card — PKR ${subtotal.toLocaleString()}`
-                : `Place order — PKR ${subtotal.toLocaleString()}`}
+              {loading ? "Placing order..." : `Place order — PKR ${subtotal.toLocaleString()}`}
             </button>
           </form>
 

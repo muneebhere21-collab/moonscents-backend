@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/site/Layout";
 import { ProductCard } from "@/components/site/ProductCard";
-import { apiRequest } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 
 type Product = {
-  _id: string;
+  id: string;
   slug: string;
   name: string;
   family: string;
@@ -31,10 +31,14 @@ function CollectionPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const results = await apiRequest<Product[]>("/api/products");
-        // Filter out the discovery kit from the standard collection grid
-        const standardProducts = (results || []).filter(p => p.slug !== "discovery-kit");
-        setProducts(standardProducts);
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, slug, name, family, tagline, price, image")
+          .eq("active", true)
+          .neq("slug", "discovery-kit")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        setProducts(data ?? []);
       } catch (err) {
         console.error("Failed to fetch products", err);
       } finally {

@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/site/Layout";
 import { useAuth } from "@/lib/auth";
-import { apiRequest } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/account")({
   component: AccountPage,
@@ -10,9 +10,9 @@ export const Route = createFileRoute("/account")({
 });
 
 type Order = {
-  _id: string;
-  createdAt: string;
-  totalAmount: number;
+  id: string;
+  created_at: string;
+  total_amount: number;
   status: string;
 };
 
@@ -29,7 +29,11 @@ function AccountPage() {
   useEffect(() => {
     if (!user) return;
     void (async () => {
-      const data = await apiRequest<Order[]>("/api/orders/my");
+      const { data } = await supabase
+        .from("orders")
+        .select("id, created_at, total_amount, status")
+        .eq("customer_email", user.email)
+        .order("created_at", { ascending: false });
       setOrders(data ?? []);
       setFetching(false);
     })();

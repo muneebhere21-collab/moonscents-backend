@@ -46,9 +46,12 @@ function AuthPage() {
     if (mode === "forgot") {
       setLoading(true);
       try {
-        const res = await fetch("/api/admin-auth/force-reset", {
+        const res = await fetch("https://eaqghrfwjunriasozpmg.supabase.co/functions/v1/admin-force-reset", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-secret": import.meta.env.VITE_ADMIN_RESET_SECRET ?? "",
+          },
           body: JSON.stringify({ email, newPassword: password }),
         });
         const data = await res.json();

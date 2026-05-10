@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/site/Layout";
-import { apiRequest } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 
 type SearchParams = {
   q?: string;
@@ -14,13 +14,10 @@ export const Route = createFileRoute("/search")({
       q: (search.q as string) || "",
     };
   },
-  head: ({ search }) => ({
-    meta: [{ title: `Search results for "${search.q}" — Moonscents` }],
-  }),
 });
 
 type Product = {
-  _id: string;
+  id: string;
   slug: string;
   name: string;
   family: string;
@@ -38,8 +35,18 @@ function SearchPage() {
     async function fetchResults() {
       setLoading(true);
       try {
-        const results = await apiRequest<Product[]>(`/api/products/search?q=${encodeURIComponent(q || "")}`);
-        setProducts(results || []);
+        const query = supabase
+          .from("products")
+          .select("id, slug, name, family, tagline, price, image")
+          .eq("active", true);
+
+        if (q && q.trim()) {
+          query.or(`name.ilike.%${q}%,family.ilike.%${q}%,tagline.ilike.%${q}%`);
+        }
+
+        const { data, error } = await query.order("created_at", { ascending: false });
+        if (error) throw error;
+        setProducts(data ?? []);
       } catch (err) {
         console.error("Search failed", err);
       } finally {
@@ -67,7 +74,7 @@ function SearchPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16">
             {products.map((product) => (
               <Link
-                key={product._id}
+                key={product.id}
                 to="/product/$slug"
                 params={{ slug: product.slug }}
                 className="group block"

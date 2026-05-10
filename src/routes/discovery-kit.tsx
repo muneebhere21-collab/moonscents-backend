@@ -2,18 +2,19 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/site/Layout";
-import { apiRequest } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { useCart } from "@/lib/cart";
 import { toast } from "sonner";
 import { X, Check } from "lucide-react";
 
 type Product = {
-  _id: string;
+  id: string;
   slug: string;
   name: string;
   family: string;
   tagline: string;
   image: string;
+  price: number;
 };
 
 export const Route = createFileRoute("/discovery-kit")({
@@ -40,11 +41,15 @@ function DiscoveryKitPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const results = await apiRequest<any[]>("/api/products");
-        if (results) {
-          const kit = results.find(p => p.slug === "discovery-kit");
+        const { data } = await supabase
+          .from("products")
+          .select("id, slug, name, family, tagline, image, price")
+          .eq("active", true)
+          .order("created_at", { ascending: false });
+        if (data) {
+          const kit = data.find(p => p.slug === "discovery-kit");
           if (kit) setKitProduct(kit);
-          setProducts(results.filter(p => p.slug !== "discovery-kit"));
+          setProducts(data.filter(p => p.slug !== "discovery-kit"));
         }
       } catch (err) {
         console.error(err);

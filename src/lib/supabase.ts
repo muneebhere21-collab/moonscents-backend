@@ -4,3 +4,8 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://eaqghrfwjunria
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_LEGACY_KEY || 'sb_publishable_idHnIioxKlB0V1evaXiVVQ_bZuzP9pS';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// The Edge Function URL for admin-only operations requiring service role
+export const EDGE_FUNCTION_URL = `${supabaseUrl}/functions/v1`;
+// Admin secret stored in env (used for force-reset edge function)
+export const ADMIN_RESET_SECRET = import.meta.env.VITE_ADMIN_RESET_SECRET || '';
