@@ -8,6 +8,6 @@ export function getSupabase() {
   
   const env = getEnv();
   console.log("Cloud Connector: Initializing Supabase client...");
-  cachedClient = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  cachedClient = createClient<any>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
   return cachedClient;
 }
